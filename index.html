@@ -3,535 +3,2270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Kafa Topu Arena</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    
+    <title>Street Hoop - Mobile Edition</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        * {
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            box-sizing: border-box;
+        }
+
         body {
-            background-color: #111;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            background: linear-gradient(135deg, #2c3e50, #34495e, #4a4a4a);
+            min-height: 100vh;
+            font-family: 'Arial Black', Arial, sans-serif;
+            color: white;
+            overflow-x: hidden;
             margin: 0;
-            font-family: 'Press Start 2P', cursive;
-            -webkit-user-select: none; -ms-user-select: none; user-select: none;
+            padding: 0;
         }
 
-        #game-container {
+        .game-container {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
             position: relative;
-            border: 5px solid #fff;
-            box-shadow: 0 0 30px #0ff;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        canvas {
-            display: block;
-            background-color: #87CEEB; /* Gökyüzü */
+        .street-court {
+            background: 
+                radial-gradient(circle at 30% 40%, rgba(139, 69, 19, 0.3), transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(160, 82, 45, 0.2), transparent 50%),
+                linear-gradient(135deg, #8B4513 0%, #A0522D 25%, #CD853F 50%, #A0522D 75%, #8B4513 100%);
+            position: relative;
+            width: 100%;
+            height: 60vh;
+            max-height: 500px;
+            min-height: 300px;
+            border-radius: 10px;
+            margin: 0 auto;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 0 20px rgba(0,0,0,0.5),
+                0 10px 30px rgba(0,0,0,0.3);
         }
 
-        .overlay {
+        /* Responsive breakpoints */
+        @media (max-width: 480px) {
+            .street-court {
+                height: 50vh;
+                min-height: 250px;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .street-court {
+                height: 55vh;
+                min-height: 300px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .street-court {
+                height: 65vh;
+                min-height: 400px;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .street-court {
+                height: 500px;
+            }
+        }
+
+        /* Tel örgü çevresi */
+        .fence {
+            position: absolute;
+            background: 
+                repeating-linear-gradient(
+                    90deg,
+                    transparent 0px,
+                    transparent 6px,
+                    rgba(120, 120, 120, 0.8) 6px,
+                    rgba(120, 120, 120, 0.8) 8px
+                ),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent 0px,
+                    transparent 6px,
+                    rgba(100, 100, 100, 0.6) 6px,
+                    rgba(100, 100, 100, 0.6) 8px
+                );
+            border: 2px solid #666;
+        }
+
+        .fence-top { top: -10px; left: -10px; right: -10px; height: 10px; }
+        .fence-bottom { bottom: -10px; left: -10px; right: -10px; height: 10px; }
+        .fence-left { left: -10px; top: -10px; bottom: -10px; width: 10px; }
+        .fence-right { right: -10px; top: -10px; bottom: -10px; width: 10px; }
+
+        /* Saha çizgileri */
+        .court-lines {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
+            pointer-events: none;
+        }
+
+        .center-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateX(-50%);
+        }
+
+        .center-circle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 80px;
+            height: 80px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .three-point-arc {
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            top: -50px;
+        }
+
+        .three-point-left {
+            left: 60px;
+            border-bottom: none;
+            border-right: none;
+            transform: rotate(-15deg);
+        }
+
+        .three-point-right {
+            right: 60px;
+            border-bottom: none;
+            border-left: none;
+            transform: rotate(15deg);
+        }
+
+        /* Basketbol potaları */
+        .basket-post {
+            position: absolute;
+            width: 6px;
+            height: 80px;
+            background: linear-gradient(180deg, #666, #333);
+            border-radius: 3px;
+        }
+
+        .basket-post-left { left: 12px; top: 80px; }
+        .basket-post-right { right: 12px; top: 80px; }
+
+        .basket {
+            position: absolute;
+            width: 60px;
+            height: 20px;
+            border: 3px solid #ff6b35;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at center, rgba(255, 107, 53, 0.3), rgba(255, 107, 53, 0.1));
+            box-shadow: 0 3px 10px rgba(255, 107, 53, 0.4);
+        }
+
+        .basket-left { left: 5px; top: 80px; }
+        .basket-right { right: 5px; top: 80px; }
+
+        .backboard {
+            position: absolute;
+            width: 12px;
+            height: 40px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(200,200,200,0.8));
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 2px;
+        }
+
+        .backboard-left { left: 0px; top: 70px; }
+        .backboard-right { right: 0px; top: 70px; }
+
+        /* Oyuncular - Büyük ve detaylı */
+        .player {
+            position: absolute;
+            width: 50px;
+            height: 65px;
+            transition: all 0.2s ease;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            text-align: center;
+            justify-content: center;
+            z-index: 10;
+            transform-origin: bottom center;
         }
 
-        .overlay h1 {
-            font-size: 50px;
-            color: #FFD700;
-            text-shadow: 3px 3px #ff0000;
-            margin-bottom: 20px;
-        }
-        
-        .overlay p {
-            font-size: 20px;
-            margin-bottom: 30px;
-        }
-
-        .overlay button {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 24px;
-            padding: 15px 30px;
-            background: #4CAF50;
-            color: white;
-            border: 3px solid white;
-            border-radius: 10px;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: transform 0.2s;
-        }
-
-        .overlay button:hover {
-            transform: scale(1.1);
-            background: #45a049;
-        }
-
-        #end-screen {
-            display: none;
-        }
-        
-        /* Mobil Kontroller */
-        #mobile-controls {
-            display: none; 
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            padding: 0 20px;
-            box-sizing: border-box;
-            z-index: 100;
-            justify-content: space-between;
-        }
-        
-        @media (hover: none) and (pointer: coarse) {
-            #mobile-controls { display: flex; }
-        }
-
-        .mobile-btn {
-            width: 70px; height: 70px;
-            background-color: rgba(255, 255, 255, 0.3);
-            border: 2px solid white;
+        .player-head {
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
+            background: linear-gradient(135deg, #D2B48C, #CD853F);
+            border: 2px solid #8B4513;
+            margin-bottom: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .player-body {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px 8px 4px 4px;
             display: flex;
-            justify-content: center;
             align-items: center;
-            font-size: 2.5rem;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
             color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+            position: relative;
+        }
+
+        .player-arms {
+            position: absolute;
+            width: 40px;
+            height: 8px;
+            background: inherit;
+            border-radius: 20px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+            z-index: -1;
+        }
+
+        .player-legs {
+            width: 24px;
+            height: 12px;
+            background: #654321;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Hareket animasyonları */
+        .player.shooting .player-arms {
+            width: 60px;
+            transform: translate(-50%, -50%) rotate(-20deg);
+        }
+
+        .player.passing .player-arms {
+            width: 55px;
+            transform: translate(-50%, -50%) rotate(15deg);
+        }
+
+        .player.charging .player-arms {
+            animation: charge-arms 0.2s ease-in-out infinite alternate;
+        }
+
+        @keyframes charge-arms {
+            from { width: 40px; }
+            to { width: 50px; }
+        }
+
+        /* Responsive oyuncu boyutları */
+        @media (max-width: 480px) {
+            .player {
+                width: 40px;
+                height: 52px;
+            }
+            
+            .player-head {
+                width: 16px;
+                height: 16px;
+            }
+            
+            .player-body {
+                width: 24px;
+                height: 24px;
+                font-size: 11px;
+            }
+            
+            .player-arms {
+                width: 32px;
+                height: 6px;
+            }
+            
+            .player.shooting .player-arms {
+                width: 48px;
+            }
+            
+            .player.passing .player-arms {
+                width: 44px;
+            }
+            
+            .player-legs {
+                width: 20px;
+                height: 10px;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .player {
+                width: 45px;
+                height: 58px;
+            }
+            
+            .player-head {
+                width: 18px;
+                height: 18px;
+            }
+            
+            .player-body {
+                width: 27px;
+                height: 27px;
+                font-size: 12px;
+            }
+            
+            .player-arms {
+                width: 36px;
+                height: 7px;
+            }
+            
+            .player.shooting .player-arms {
+                width: 54px;
+            }
+            
+            .player.passing .player-arms {
+                width: 50px;
+            }
+            
+            .player-legs {
+                width: 22px;
+                height: 11px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .player {
+                width: 55px;
+                height: 70px;
+            }
+            
+            .player-head {
+                width: 22px;
+                height: 22px;
+            }
+            
+            .player-body {
+                width: 33px;
+                height: 33px;
+                font-size: 15px;
+            }
+            
+            .player-arms {
+                width: 44px;
+                height: 9px;
+            }
+            
+            .player.shooting .player-arms {
+                width: 66px;
+            }
+            
+            .player.passing .player-arms {
+                width: 60px;
+            }
+            
+            .player-legs {
+                width: 26px;
+                height: 13px;
+            }
+        }
+
+        .team1-player .player-body {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border: 1px solid #a93226;
+        }
+
+        .team2-player .player-body {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: 1px solid #1f4e79;
+        }
+
+        .player.controlled {
+            transform: scale(1.15);
+            filter: drop-shadow(0 0 12px #ffd700);
+            z-index: 15;
+        }
+
+        .player.ai-controlled {
+            opacity: 0.8;
+        }
+
+        .player.jumping {
+            animation: jump 0.6s ease-out;
+        }
+
+        @keyframes jump {
+            0% { transform: translateY(0) scale(1.15); }
+            50% { transform: translateY(-25px) scale(1.2); }
+            100% { transform: translateY(0) scale(1.15); }
+        }
+
+        /* Basketbol - Responsive */
+        .ball {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: 
+                radial-gradient(circle at 25% 25%, #ff8c42, #ff7518),
+                linear-gradient(45deg, transparent 45%, #000 45%, #000 55%, transparent 55%),
+                linear-gradient(-45deg, transparent 45%, #000 45%, #000 55%, transparent 55%);
+            border-radius: 50%;
+            transition: all 0.1s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            z-index: 20;
+            border: 1px solid #cc4400;
+        }
+
+        /* Responsive top boyutu */
+        @media (max-width: 480px) {
+            .ball {
+                width: 16px;
+                height: 16px;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .ball {
+                width: 18px;
+                height: 18px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .ball {
+                width: 22px;
+                height: 22px;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .ball {
+                width: 25px;
+                height: 25px;
+            }
+        }
+
+        .ball.spinning {
+            animation: spin 0.4s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* UI - Responsive */
+        .score-board {
+            background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(30,30,30,0.9));
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .team-info {
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px;
+            margin: 2px;
+        }
+
+        .team-info h6 {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .team1-info {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.9), rgba(192, 57, 43, 0.9));
+            border: 1px solid rgba(231, 76, 60, 0.5);
+        }
+
+        .team2-info {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.9), rgba(41, 128, 185, 0.9));
+            border: 1px solid rgba(52, 152, 219, 0.5);
+        }
+
+        .timer {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #ffd700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+
+        /* Responsive timer ve skor */
+        @media (max-width: 480px) {
+            .score-board {
+                padding: 8px;
+                margin-bottom: 8px;
+            }
+            
+            .team-info {
+                padding: 6px;
+            }
+            
+            .team-info h6 {
+                font-size: 0.8rem;
+            }
+            
+            .timer {
+                font-size: 1.5rem;
+            }
+            
+            .fs-2 {
+                font-size: 1.5rem !important;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .score-board {
+                padding: 12px;
+            }
+            
+            .timer {
+                font-size: 1.8rem;
+            }
+            
+            .fs-2 {
+                font-size: 1.8rem !important;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .score-board {
+                padding: 15px;
+            }
+            
+            .timer {
+                font-size: 2.2rem;
+            }
+        }
+
+        /* Mobil kontroller - Responsive */
+        .mobile-controls {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+            padding: 0 10px;
+            width: 100%;
+            max-width: 400px;
+            justify-content: center;
+        }
+
+        .control-button {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(50,50,50,0.8));
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .control-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.7);
+        }
+
+        .control-button.charging {
+            animation: charge-pulse 0.1s ease-in-out infinite alternate;
+        }
+
+        @keyframes charge-pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        /* Responsive buton boyutları */
+        @media (max-width: 480px) {
+            .mobile-controls {
+                gap: 10px;
+                bottom: 5px;
+            }
+            
+            .control-button {
+                width: 60px;
+                height: 60px;
+                font-size: 10px;
+            }
+            
+            .control-button i {
+                font-size: 14px;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .mobile-controls {
+                gap: 12px;
+                bottom: 8px;
+            }
+            
+            .control-button {
+                width: 65px;
+                height: 65px;
+                font-size: 11px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .mobile-controls {
+                gap: 18px;
+                bottom: 15px;
+            }
+            
+            .control-button {
+                width: 75px;
+                height: 75px;
+                font-size: 13px;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .mobile-controls {
+                display: none;
+            }
+        }
+
+        .jump-btn {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            border-color: #9b59b6;
+        }
+
+        .shoot-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border-color: #e74c3c;
+        }
+
+        .pass-btn {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            border-color: #f39c12;
+        }
+
+        .switch-btn {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            border-color: #2ecc71;
+        }
+
+        /* Güç göstergesi - Responsive */
+        .power-indicator {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 10px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 5px;
+            border: 2px solid rgba(255,255,255,0.3);
+            overflow: hidden;
+        }
+
+        .power-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.1s ease, background-color 0.2s ease;
+            border-radius: 3px;
+        }
+
+        /* Responsive güç göstergesi */
+        @media (max-width: 480px) {
+            .power-indicator {
+                width: 100px;
+                height: 8px;
+                bottom: 8px;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .power-indicator {
+                width: 110px;
+                height: 9px;
+                bottom: 9px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .power-indicator {
+                width: 140px;
+                height: 11px;
+                bottom: 12px;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .power-indicator {
+                width: 150px;
+                height: 12px;
+                bottom: 15px;
+            }
+        }
+
+        /* AI Göstergesi - Responsive */
+        .ai-indicator {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
             font-weight: bold;
         }
-        .mobile-btn:active { background-color: rgba(255, 255, 255, 0.6); }
 
+        @media (min-width: 481px) {
+            .ai-indicator {
+                top: 10px;
+                right: 10px;
+                padding: 5px 10px;
+                font-size: 12px;
+            }
+        }
+
+        /* Container padding - Responsive */
+        .container-fluid {
+            padding: 8px;
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .container-fluid {
+                padding: 12px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .container-fluid {
+                padding: 16px;
+            }
+        }
+
+        /* Alert responsive */
+        .alert {
+            font-size: 0.8rem;
+            padding: 8px 12px;
+            margin-bottom: 10px;
+        }
+
+        @media (min-width: 769px) {
+            .alert {
+                font-size: 0.9rem;
+                padding: 10px 15px;
+                margin-bottom: 15px;
+            }
+        }
+
+        /* Landscape mode adjustments */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .game-title {
+                margin-bottom: 8px;
+            }
+            
+            .game-title h1 {
+                font-size: 1.3rem;
+            }
+            
+            .game-title .lead {
+                font-size: 0.7rem;
+            }
+            
+            .street-court {
+                height: 45vh;
+                min-height: 200px;
+            }
+            
+            .score-board {
+                padding: 6px;
+                margin-bottom: 6px;
+            }
+            
+            .mobile-controls {
+                bottom: 5px;
+                gap: 8px;
+            }
+            
+            .control-button {
+                width: 50px;
+                height: 50px;
+                font-size: 9px;
+            }
+        }0,0,0,0.7);
+            border-radius: 6px;
+            border: 2px solid rgba(255,255,255,0.3);
+            overflow: hidden;
+        }
+
+        .power-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.1s ease, background-color 0.2s ease;
+            border-radius: 4px;
+        }
+
+        .power-fill.green { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+        .power-fill.blue { background: linear-gradient(90deg, #2980b9, #3498db); }
+        .power-fill.red { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+
+        /* Partikül efektleri */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ffd700;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particle-burst 1s ease-out forwards;
+        }
+
+        @keyframes particle-burst {
+            0% { opacity: 1; transform: scale(1) translateY(0); }
+            100% { opacity: 0; transform: scale(0) translateY(-40px); }
+        }
+
+        .floating-score {
+            position: absolute;
+            font-size: 24px;
+            font-weight: 900;
+            color: #ffd700;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+            animation: float-score 1.5s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        @keyframes float-score {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.3); }
+        }
+
+        /* AI Göstergesi */
+        .ai-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Oyuncu seçim ok işareti */
+        .player-arrow {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        /* Desktop gizle - Responsive */
+        .desktop-controls {
+            display: none;
+        }
+
+        @media (min-width: 1025px) {
+            .mobile-controls { 
+                display: none; 
+            }
+            .desktop-controls { 
+                display: block; 
+            }
+        }
+
+        .btn-street {
+            background: linear-gradient(135deg, #ff6b35, #f39c12);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin: 3px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .btn-street:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+            color: white;
+        }
+
+        /* Responsive butonlar */
+        @media (min-width: 769px) {
+            .btn-street {
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+        }
+
+        .game-title {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 0 10px;
+        }
+
+        .game-title h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ffd700, #ff6b35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .game-title .lead {
+            font-size: 1rem;
+            margin-bottom: 0;
+        }
+
+        /* Responsive başlık */
+        @media (max-width: 480px) {
+            .game-title {
+                margin-bottom: 10px;
+            }
+            
+            .game-title h1 {
+                font-size: 1.5rem;
+            }
+            
+            .game-title .lead {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .game-title h1 {
+                font-size: 1.8rem;
+            }
+            
+            .game-title .lead {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .game-title h1 {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .game-title {
+                margin-bottom: 20px;
+            }
+            
+            .game-title h1 {
+                font-size: 2.5rem;
+            }
+            
+            .game-title .lead {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
 <body>
-
-    <div id="game-container">
-        <canvas id="gameCanvas" width="800" height="450"></canvas>
-        
-        <div id="start-screen" class="overlay">
-            <h1>KAFA TOPU</h1>
-            <p>Ok tuşlarıyla hareket et ve zıpla. <br>Boşluk tuşu ile şut çek!</p>
-            <button id="start-btn">Maça Başla</button>
+    <div class="container-fluid">
+        <div class="game-title">
+            <h1><i class="fas fa-basketball-ball"></i> STREET HOOP</h1>
+            <p class="lead">Mobil Sokak Basketbolu</p>
         </div>
 
-        <div id="end-screen" class="overlay">
-            <h1 id="result-text">MAÇ BİTTİ</h1>
-            <p id="final-score-text">Skor: 0 - 0</p>
-            <button id="restart-btn">Yeniden Oyna</button>
-        </div>
-        
-        <div id="mobile-controls">
-            <div id="left-btn" class="mobile-btn">‹</div>
-            <div id="right-btn" class="mobile-btn">›</div>
-            <div id="kick-btn" class="mobile-btn">⚽</div>
-            <div id="jump-btn" class="mobile-btn">↑</div>
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="game-container p-2 p-md-3 p-lg-4">
+                    <!-- Skor Tablosu -->
+                    <div class="score-board">
+                        <div class="row align-items-center">
+                            <div class="col-4">
+                                <div class="team1-info">
+                                    <h6 id="team1Name">SEN</h6>
+                                    <div class="fs-2 fw-bold" id="score1">0</div>
+                                </div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="timer" id="timer">60</div>
+                                <div style="font-size: 0.7rem;">SANİYE</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="team2-info">
+                                    <h6 id="team2Name">AI</h6>
+                                    <div class="fs-2 fw-bold" id="score2">0</div>
+                                </div>
+                                <div class="ai-indicator">
+                                    <i class="fas fa-robot"></i> AI
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sokak Basketbol Sahası -->
+                    <div class="street-court" id="court">
+                        <!-- Tel örgü -->
+                        <div class="fence fence-top"></div>
+                        <div class="fence fence-bottom"></div>
+                        <div class="fence fence-left"></div>
+                        <div class="fence fence-right"></div>
+                        
+                        <!-- Saha çizgileri -->
+                        <div class="court-lines">
+                            <div class="center-line"></div>
+                            <div class="center-circle"></div>
+                            <div class="three-point-arc three-point-left"></div>
+                            <div class="three-point-arc three-point-right"></div>
+                        </div>
+                        
+                        <!-- Potalar -->
+                        <div class="backboard backboard-left"></div>
+                        <div class="basket-post basket-post-left"></div>
+                        <div class="basket basket-left" id="basket1"></div>
+                        
+                        <div class="backboard backboard-right"></div>
+                        <div class="basket-post basket-post-right"></div>
+                        <div class="basket basket-right" id="basket2"></div>
+                        
+                        <!-- Top -->
+                        <div class="ball" id="ball"></div>
+                        
+                        <!-- Güç göstergesi -->
+                        <div class="power-indicator">
+                            <div class="power-fill" id="powerFill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Desktop Kontroller -->
+                    <div class="desktop-controls text-center mt-3">
+                        <div class="alert alert-info">
+                            <strong>Kontroller:</strong> 
+                            <kbd>SPACE</kbd> Zıpla | 
+                            <kbd>S</kbd> Şut | 
+                            <kbd>A</kbd> Pas | 
+                            <kbd>D</kbd> Oyuncu Değiştir
+                        </div>
+                        <button class="btn btn-street" id="startBtn">
+                            <i class="fas fa-play"></i> BAŞLAT
+                        </button>
+                        <button class="btn btn-street" id="resetBtn">
+                            <i class="fas fa-redo"></i> YENİDEN
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Mobil Kontroller -->
+    <div class="mobile-controls">
+        <div class="control-button jump-btn" id="jumpBtn">
+            <i class="fas fa-arrow-up"></i>
+            <span>ZIPLA</span>
+        </div>
+        <div class="control-button pass-btn" id="passBtn">
+            <i class="fas fa-hand-paper"></i>
+            <span>PAS</span>
+        </div>
+        <div class="control-button shoot-btn" id="shootBtn">
+            <i class="fas fa-basketball-ball"></i>
+            <span>ŞUT</span>
+        </div>
+        <div class="control-button switch-btn" id="switchBtn">
+            <i class="fas fa-exchange-alt"></i>
+            <span>DEĞİŞ</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script>
-    // --- TEMEL KURULUM ---
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const startScreen = document.getElementById('start-screen');
-    const endScreen = document.getElementById('end-screen');
-    const startBtn = document.getElementById('start-btn');
-    const restartBtn = document.getElementById('restart-btn');
-    const resultText = document.getElementById('result-text');
-    const finalScoreText = document.getElementById('final-score-text');
-
-    // --- SES EFEKTLERİ (Base64 formatında) ---
-    const sounds = {
-        kick: new Audio("data:audio/wav;base64,UklGRlgBAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YXIAAACw/v/+v/7//v/+v/7//v/+v/4A/gD+AP4A/gD+AP4A/gD+AP4A/v/9//3//f/9//3//f/9//3//f/9//z/+v/6//r/+v/6//r/+v/6//r/+f/5//n/+f/5//n/+f/5//n/+f/4//j/+P/4//j/+P/4//j/+P/4//f/9/33/ff99/33/ff99/33/ff98/3z/fP98/3z/fP98/3z/fP98/3z/ev96/3r/ev96/3r/ev96/3r/ev95/3n/ef95/3n/ef95/3n/ef95/3j/eP94/3j/eP94/3j/eP94/3j/eP93/3X/df91/3X/df91/3X/df91/3L/cv9y/3L/cv9y/3L/cv9y/3L/cv9x/3H/cf9x/3H/cf9x/3H/cf9x/3D/cP9w/3D/cP9w/3D/cP9w/3D/cP9v/2//b/9v/2//b/9v/2//b/9v/2//af9p/2n/af9p/2n/af9p/2n/af9o/2j/aP9o/2j/aP9o/2j/aP9o/2b/Zv9m/2b/Zv9m/2b/Zv9m/2b/Yv9i/2L/Yv9i/2L/Yv9i/2L/Yv9h/2H/Yf9h/2H/Yf9h/2H/Yf9h/2D/YP9g/2D/YP9g/2D/YP9g/2D/X/9f/1//X/9f/1//X/9f/1//X/9e/17/Xv9e/17/Xv9e/17/Xv9e/13/Xf9d/13/Xf9d/13/Xf9d/13/XP9c/1z/XP9c/1z/XP9c/1z/XP9b/1v/W/9b/1v/W/9b/1v/W/9b/1r/Wv9a/1r/Wv9a/1r/Wv9a/1r/V/9X/1f/V/9X/1f/V/9X/1f/V/9U/1T/VP9U/1T/VP9U/1T/VP9U/1P/U/9T/1P/U/9T/1P/U/9T/1P/Uv9S/1L/Uv9S/1L/Uv9S/1L/Uv9R/1H/Uf9R/1H/Uf9R/1H/Uf9R/1D/UP9Q/1D/UP9Q/1D/UP9Q/1D/T/9P/0//T/9P/0//T/9P/0//T/9O/07/Tv9O/07/Tv9O/07/Tv9O/03/Tf9N/03/Tf9N/03/Tf9N/03/S/9L/0v/S/9L/0v/S/9L/0v/S/9K/0r/Sv9K/0r/Sv9K/0r/Sv9K/0r/SP9I/0j/SP9I/0j/SP9I/0j/SP9H/0f/R/9H/0f/R/9H/0f/R/9H/0P/Q/9D/0P/Q/9D/0P/Q/9D/0P/Qv9C/0L/Qv9C/0L/Qv9C/0L/Qv9B/0H/Qf9B/0H/Qf9B/0H/Qf9B/0D/QP9A/0D/QP9A/0D/QP9A/0D/P/8//z//P/8//z//P/8//z//Pv8+/z7/Pv8+/z7/Pv8+/z7/Pv89/z3/Pf89/z3/Pf89/z3/Pf89/zz/PP88/zz/PP88/zz/PP88/zz/O/87/zv/O/87/zv/O/87/zv/O/86/zr/Ov86/zr/Ov86/zr/Ov86/zn/Of85/zn/Of85/zn/Of85/zn/OP84/zj/OP84/zj/OP84/zj/OP83/zf/N/83/zf/N/83/zf/N/83/zL/Mv8y/zL/Mv8y/zL/Mv8y/zL/Mf8x/zH/Mf8x/zH/Mf8x/zH/Mf8w/zD/MP8w/zD/MP8w/zD/MP8w/y//L/8v/y//L/8v/y//L/8v/y//K/8r/yv/K/8r/yv/K/8r/yv/K/8p/yn/Kf8p/yn/Kf8p/yn/Kf8p/yj/KP8o/yj/KP8o/yj/KP8o/yj/J/8n/yf/J/8n/yf/J/8n/yf/J/8i/yL/Iv8i/yL/Iv8i/yL/Iv8i/yH/If8h/yH/If8h/yH/If8h/yH/IP8g/yD/IP8g/yD/IP8g/yD/IP8f/x//H/8f/x//H/8f/x//H/8f/x7/Hv8e/x7/Hv8e/x7/Hv8e/x7/G/8b/xv/G/8b/xv/G/8b/xv/G/8Z/xn/Gf8Z/xn/Gf8Z/xn/Gf8Z/xX/Ff8V/xX/Ff8V/xX/Ff8V/xX/E/8T/xP/E/8T/xP/E/8T/xP/E/8R/xH/Ef8R/xH/Ef8R/xH/Ef8R/w//D/8P/w//D/8P/w//D/8P/w//C/8L/wv/C/8L/wv/C/8L/wv/C/8I/wj/CP8I/wj/CP8I/wj/CP8I/wX/Bf8F/wX/Bf8F/wX/Bf8F/wX/Av8C/wL/Av8C/wL/Av8C/wL/Av/+/v7+/v7+/v7+/v7+/v7+/v7+/v39/f39/f39/f39/f39/f39/f39/fn5+fn5+fn5+fn5+fn5+fn5+fn5+Pn4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+PT09PT09PT09PT09PT09PT09PT09PT09PTz8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v39/f39/f39/f39/f39/f39/f39/f39/Q=="),
-        goal: new Audio("data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAAABkYXRhVwAAAPX+/v79/f/6//r/+v75/vn++f35/vv9+v36/vz9+P34/ff99/32/fb99P3z/fL98f3x/vL+8f7v/u/+7/7s/uv+6v7p/un+5/7m/uX+4v7g/t/+3/7a/tn+1/7V/tT+0v7Q/s/+z/7N/s3+y/7K/sr+x/7G/sf+w/7A/sD+v/6+/r3+vP67/rr+uP63/rf+tP6z/rL+sP6v/q/+qP6k/qT+o/6f/p/+nv6c/pr+mf6X/pf+kv6R/pD+j/6P/o3+if6I/of+hP6A/oD+f/59/nz+e/56/nn+d/52/nT+cv5x/nD+bv5s/mr+af5o/mj+Zf5k/mH+Yf5g/l/+X/5b/lv+Wv5Z/ln+V/5U/lP+Uv5R/lD+T/5O/k3+S/5K/kn+SP5H/kf+Q/5B/kD+f/58/nz+e/56/nn+c/5z/nD+b/5u/mz+av5q/mn+aP5o/mT+Y/5i/mH+X/5f/lv+W/5a/ln+V/5U/lT+U/5S/lH+Uf5P/k/+Tf5N/kv+Sv5J/kj+R/5H/kP+Qv5A/n/+fP58/nv+e/56/nn+c/5z/nL+cQ=="),
-        whistle: new Audio("data:audio/wav;base64,UklGRqACAABXQVZFZm10IBAAAAABAAIARKwAABCxAgAEABAAZGF0YYACAABAgD9AP0E/QD9AP0A/vj+AP74/vj++P7s/gD+uP6s/oD+qP6Y/qT+sP6I/n/+cP5k/lT+TP5A/kL+RP5I/kj+QP4w/iL+Hv4a/hT+Cv4C/gr+Df4O/hD+DP4M/gn+CP4E/gP+/P76/vX+9v7z/vD+7v7q/uj+4f7c/tb+0P7M/sf+vv66/q/+pP6Y/oj+fv5y/m/+av5i/l/+Wf5U/kD+Qf5B/kj+T/5S/lP+VP5T/lD+R/47/jj+Of49/kf+Uv5g/mT+Zf5c/lj+V/5Q/kn+Pv44/iz+Iv4a/hD+Av76/u7+5v7W/sv+w/6y/p7+df5j/lj+SP47/iT+EP74/t/+sP6L/mz+Uv45/hf+6v6v/nT+SP4h/vP+p/5v/jL+8P6I/kL+9/5w/h7+1f5U/gD+hv4f/sL+Qv7R/lT+zf5i/rL+Wv6s/kL+wv5i/tX+dP7C/lr+tP4a/tX+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7C/lT+sP4a/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/sH+cv7G/mD+pP4e/s-H/N-H/N-H/N-H/N-H/N-H/N-H/M-H/M-H/M-H/M-H/M-H/M-H/M-H/L-H/L-H/L-H/L-H/L-H/L-H/L-H/L-H/K-H/K-H/K-H/K-H/K-H/K-H/K-H/K-H/J-H/J-H/J-H/J-H/J-H/J-H/J-H/J-H/I-H/I-H/I-H/I-H/I-H/I-H/I-H/I-H/H-H/H-H/H-H/H-H/H-H/H-H/H-H/G-H/G-H/G-H/G-H/G-H/G-H/G-H/G-H/F-H/F-H/F-H/F-H/F-H/F-H/F-H/F-H/E-H/E-H/E-H/E-H/E-H/E-H/E-H/E-H/D-H/D-H/D-H/D-H/D-H/D-H/D-H/D-H/C-H/C-H/C-H/C-H/C-H/C-H/C-H/C-H/B-H/B-H/B-H/B-H/B-H/B-H/B-H/B-H/A-H/A-H/A-H/A-H/A-H/A-H/A-H/A-H/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/ah/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/AH/eP/4/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/yf/J/8n/-H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8-H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8f/x//H/8="),
-    };
-
-    // --- OYUN AYARLARI ---
-    const settings = {
-        GRAVITY: 0.6,
-        PLAYER_SPEED: 4,
-        JUMP_FORCE: -13,
-        KICK_FORCE: 15,
-        BALL_FRICTION: 0.98,
-        PLAYER_FRICTION: 0.9,
-        MATCH_DURATION: 90,
-    };
-
-    let gameState = 'START';
-    let timer = settings.MATCH_DURATION;
-    let timerInterval = null;
-
-    // --- OYUN NESNELERİ ---
-    const groundY = canvas.height - 40;
-
-    const player = {
-        x: canvas.width * 0.25,
-        y: groundY,
-        w: 40, h: 60, headRadius: 30,
-        dx: 0, dy: 0,
-        onGround: true,
-        score: 0,
-        color: '#ff4136',
-    };
-
-    const ai = {
-        x: canvas.width * 0.75,
-        y: groundY,
-        w: 40, h: 60, headRadius: 30,
-        dx: 0, dy: 0,
-        onGround: true,
-        score: 0,
-        color: '#0074d9',
-    };
-
-    const ball = {
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        r: 15,
-        dx: 0, dy: 0,
-    };
-
-    const goal1 = { x: 0, y: groundY - 120, w: 40, h: 120 };
-    const goal2 = { x: canvas.width - 40, y: groundY - 120, w: 40, h: 120 };
-
-    // --- KONTROL MEKANİZMASI ---
-    const keys = {
-        ArrowLeft: false,
-        ArrowRight: false,
-        ArrowUp: false,
-        Space: false,
-    };
-
-    window.addEventListener('keydown', (e) => {
-        if (keys.hasOwnProperty(e.code)) {
-            e.preventDefault();
-            keys[e.code] = true;
-        }
-    });
-    window.addEventListener('keyup', (e) => {
-        if (keys.hasOwnProperty(e.code)) {
-            e.preventDefault();
-            keys[e.code] = false;
-        }
-    });
-    
-    // Mobil kontrol butonları
-    document.getElementById('left-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowLeft = true; });
-    document.getElementById('left-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.ArrowLeft = false; });
-    document.getElementById('right-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowRight = true; });
-    document.getElementById('right-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.ArrowRight = false; });
-    document.getElementById('jump-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowUp = true; });
-    document.getElementById('jump-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.ArrowUp = false; });
-    document.getElementById('kick-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.Space = true; });
-    document.getElementById('kick-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.Space = false; });
-
-
-    // --- ÇİZİM FONKSİYONLARI ---
-
-    function drawField() {
-        // Zemin
-        ctx.fillStyle = '#2ECC40';
-        ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(0, groundY);
-        ctx.lineTo(canvas.width, groundY);
-        ctx.stroke();
-
-        // Kaleler
-        ctx.strokeStyle = '#DDDDDD';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(goal1.x, goal1.y, goal1.w, goal1.h); // Sol kale
-        ctx.strokeRect(goal2.x, goal2.y, goal2.w, goal2.h); // Sağ kale
-    }
-
-    function drawPlayer(p) {
-        // Ayak/Vücut
-        ctx.fillStyle = p.color;
-        ctx.fillRect(p.x - p.w / 2, p.y - p.h, p.w, p.h);
-
-        // Kafa
-        ctx.beginPath();
-        ctx.arc(p.x, p.y - p.h, p.headRadius, 0, Math.PI * 2);
-        ctx.fillStyle = '#F3D1B9'; // Ten rengi
-        ctx.fill();
-        ctx.strokeStyle = '#000';
-        ctx.stroke();
-
-        // Göz
-        ctx.beginPath();
-        const eyeX = p.x + (ball.x > p.x ? 10 : -10);
-        const eyeY = p.y - p.h - 5;
-        ctx.arc(eyeX, eyeY, 5, 0, Math.PI * 2);
-        ctx.fillStyle = 'white';
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(eyeX + (ball.x - eyeX)/10, eyeY + (ball.y - eyeY)/10, 2, 0, Math.PI * 2);
-        ctx.fillStyle = 'black';
-        ctx.fill();
-    }
-
-    function drawBall() {
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fill();
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-    }
-
-    function drawUI() {
-        ctx.fillStyle = 'white';
-        ctx.font = "32px 'Press Start 2P'";
-        ctx.textAlign = 'center';
-        
-        // Skor
-        ctx.fillText(`${player.score} - ${ai.score}`, canvas.width / 2, 50);
-
-        // Zaman
-        const minutes = Math.floor(timer / 60);
-        const seconds = timer % 60;
-        ctx.fillText(`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`, canvas.width / 2, 90);
-    }
-    
-    // --- GÜNCELLEME ve FİZİK FONKSİYONLARI ---
-
-    function updatePhysics(p) {
-        // Yer çekimi
-        if (!p.onGround) {
-            p.dy += settings.GRAVITY;
-        }
-        p.y += p.dy;
-        p.x += p.dx;
-
-        // Sürtünme
-        p.dx *= settings.PLAYER_FRICTION;
-
-        // Zemin kontrolü
-        if (p.y >= groundY) {
-            p.y = groundY;
-            p.dy = 0;
-            p.onGround = true;
-        }
-
-        // Saha sınırları
-        if (p.x - p.headRadius < 0) p.x = p.headRadius;
-        if (p.x + p.headRadius > canvas.width) p.x = canvas.width - p.headRadius;
-    }
-
-    function handlePlayerInput() {
-        if (keys.ArrowLeft) player.dx = -settings.PLAYER_SPEED;
-        if (keys.ArrowRight) player.dx = settings.PLAYER_SPEED;
-        if (keys.ArrowUp && player.onGround) {
-            player.dy = settings.JUMP_FORCE;
-            player.onGround = false;
-        }
-    }
-    
-    function updateAI() {
-        const distToBallX = ball.x - ai.x;
-        const distToBallY = ball.y - ai.y;
-
-        // Hücum / Savunma Modu
-        if (ball.x > canvas.width / 2) { // Top kendi sahasındaysa hücum et
-            if (distToBallX > 10) {
-                ai.dx = settings.PLAYER_SPEED * 0.8;
-            } else if (distToBallX < -10) {
-                ai.dx = -settings.PLAYER_SPEED * 0.8;
+        class MobileStreetHoop {
+            constructor() {
+                this.initializeElements();
+                this.initializeGame();
+                this.bindEvents();
+                this.createPlayers();
+                this.gameLoop();
             }
-        } else { // Top rakip sahadaysa kalesine yakın dur
-            const defensivePos = canvas.width * 0.75;
-            if (ai.x < defensivePos) {
-                 ai.dx = settings.PLAYER_SPEED * 0.7;
-            } else if (ai.x > defensivePos + 10) {
-                 ai.dx = -settings.PLAYER_SPEED * 0.7;
+
+            initializeElements() {
+                this.court = document.getElementById('court');
+                this.ball = document.getElementById('ball');
+                this.timer = document.getElementById('timer');
+                this.score1 = document.getElementById('score1');
+                this.score2 = document.getElementById('score2');
+                this.startBtn = document.getElementById('startBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.powerFill = document.getElementById('powerFill');
+                
+                // Mobil kontroller
+                this.jumpBtn = document.getElementById('jumpBtn');
+                this.shootBtn = document.getElementById('shootBtn');
+                this.passBtn = document.getElementById('passBtn');
+                this.switchBtn = document.getElementById('switchBtn');
             }
-        }
 
-        // Zıplama kararı
-        if (ai.onGround && distToBallY < -50 && Math.abs(distToBallX) < 100) {
-            ai.dy = settings.JUMP_FORCE;
-            ai.onGround = false;
-        }
-    }
+            initializeGame() {
+                this.gameState = {
+                    isPlaying: false,
+                    isPaused: false,
+                    timeLeft: 60,
+                    scores: [0, 0],
+                    ballPos: { x: 0, y: 0 },
+                    ballVelocity: { x: 0, y: 0 },
+                    ballHolder: null,
+                    gravity: 0.6,
+                    players: [],
+                    controlledPlayer: 0,
+                    shotPower: 0,
+                    isCharging: false,
+                    chargingType: null,
+                    aiDifficulty: 0.7
+                };
 
-    function updateBall() {
-        ball.dy += settings.GRAVITY * 0.7; // Top daha hafif olsun
-        ball.x += ball.dx;
-        ball.y += ball.dy;
+                this.keys = {};
+                
+                // Responsive boyutlar
+                this.updateCourtDimensions();
+                
+                // Resize listener
+                window.addEventListener('resize', () => {
+                    this.updateCourtDimensions();
+                    this.repositionPlayers();
+                });
+                
+                // Oyuncu verileri
+                this.teamData = {
+                    player: [
+                        { name: 'SEN', position: 'Guard', stats: { speed: 80, shooting: 75, defense: 70, passing: 80 } },
+                        { name: 'TM1', position: 'Forward', stats: { speed: 75, shooting: 80, defense: 75, passing: 70 } },
+                        { name: 'TM2', position: 'Center', stats: { speed: 65, shooting: 70, defense: 85, passing: 65 } }
+                    ],
+                    ai: [
+                        { name: 'AI1', position: 'Guard', stats: { speed: 75, shooting: 80, defense: 75, passing: 85 } },
+                        { name: 'AI2', position: 'Forward', stats: { speed: 80, shooting: 75, defense: 80, passing: 75 } },
+                        { name: 'AI3', position: 'Center', stats: { speed: 70, shooting: 70, defense: 90, passing: 70 } }
+                    ]
+                };
 
-        ball.dx *= settings.BALL_FRICTION;
-        ball.dy *= settings.BALL_FRICTION;
-
-        // Duvarlardan sekme
-        if (ball.x + ball.r > canvas.width || ball.x - ball.r < 0) {
-            ball.dx *= -0.8;
-            if (ball.x + ball.r > canvas.width) ball.x = canvas.width - ball.r;
-            if (ball.x - ball.r < 0) ball.x = ball.r;
-        }
-        if (ball.y - ball.r < 0) { // Tavandan sekme
-            ball.dy *= -0.8;
-            ball.y = ball.r;
-        }
-
-        // Yerden sekme
-        if (ball.y + ball.r > groundY) {
-            ball.y = groundY - ball.r;
-            ball.dy *= -0.7;
-        }
-    }
-
-    function checkCollision(p, b) {
-        // Kafa ile çarpışma
-        let distHead = Math.sqrt((p.x - b.x)**2 + ((p.y - p.h) - b.y)**2);
-        if (distHead < p.headRadius + b.r) {
-            handleCollision(p, b, true);
-        }
-
-        // Vücut ile çarpışma
-        let closestX = Math.max(p.x - p.w/2, Math.min(b.x, p.x + p.w/2));
-        let closestY = Math.max(p.y - p.h, Math.min(b.y, p.y));
-        let distBody = Math.sqrt((closestX - b.x)**2 + (closestY - b.y)**2);
-        if(distBody < b.r){
-            handleCollision(p, b, false);
-        }
-    }
-    
-    function handleCollision(p, b, isHead) {
-        const angle = Math.atan2(b.y - (p.y - p.h), b.x - p.x);
-        let force = isHead ? settings.KICK_FORCE * 1.2 : settings.KICK_FORCE * 0.8;
-        
-        // Eğer oyuncu şut tuşuna basıyorsa ekstra güç
-        if ((p === player && keys.Space) || (p === ai && Math.abs(b.x - ai.x) < 80)) {
-            force *= 1.5;
-            if (p === player) sounds.kick.play();
-        }
-
-        b.dx = Math.cos(angle) * force + p.dx * 0.5;
-        b.dy = Math.sin(angle) * force + p.dy * 0.5;
-    }
-
-    function checkGoal() {
-        if (ball.y > goal1.y) {
-            if (ball.x - ball.r < goal1.w) {
-                goalScored(ai);
-            } else if (ball.x + ball.r > goal2.x) {
-                goalScored(player);
+                this.touchStartTime = 0;
+                this.chargingInterval = null;
             }
-        }
-    }
-    
-    function goalScored(scorer) {
-        scorer.score++;
-        sounds.goal.play();
-        resetPositions();
-    }
 
-    function resetPositions() {
-        player.x = canvas.width * 0.25;
-        player.y = groundY;
-        player.dx = player.dy = 0;
-        player.onGround = true;
+            updateCourtDimensions() {
+                const courtElement = this.court;
+                const rect = courtElement.getBoundingClientRect();
+                this.courtWidth = rect.width;
+                this.courtHeight = rect.height;
+                
+                // Responsive ball start position
+                this.gameState.ballPos = { 
+                    x: this.courtWidth * 0.5, 
+                    y: this.courtHeight * 0.75 
+                };
+            }
 
-        ai.x = canvas.width * 0.75;
-        ai.y = groundY;
-        ai.dx = ai.dy = 0;
-        ai.onGround = true;
+            repositionPlayers() {
+                if (!this.gameState.players.length) return;
+                
+                // Oyuncu pozisyonlarını yeniden hesapla
+                this.gameState.players.forEach((player, index) => {
+                    if (player.team === 1) {
+                        player.pos.x = this.courtWidth * 0.15 + (player.index * this.courtWidth * 0.08);
+                        player.pos.y = this.courtHeight * 0.6 + (player.index * this.courtHeight * 0.08);
+                    } else {
+                        player.pos.x = this.courtWidth * 0.75 + (player.index * this.courtWidth * 0.06);
+                        player.pos.y = this.courtHeight * 0.6 + (player.index * this.courtHeight * 0.08);
+                    }
+                    
+                    // Sınırlar içinde tut
+                    player.pos.x = Math.max(20, Math.min(this.courtWidth - 40, player.pos.x));
+                    player.pos.y = Math.max(40, Math.min(this.courtHeight - 60, player.pos.y));
+                    
+                    player.targetPos = { ...player.pos };
+                });
+            }
 
-        ball.x = canvas.width / 2;
-        ball.y = canvas.height / 3;
-        ball.dx = (Math.random() - 0.5) * 5;
-        ball.dy = 0;
-    }
+            createPlayers() {
+                document.querySelectorAll('.player').forEach(p => p.remove());
+                this.gameState.players = [];
 
-    // --- OYUN AKIŞI ---
+                // Responsive pozisyon hesaplama
+                // Oyuncu takımı (sol taraf)
+                this.teamData.player.forEach((playerData, index) => {
+                    const player = this.createPlayerElement(1, index, playerData);
+                    const x = this.courtWidth * 0.15 + (index * this.courtWidth * 0.08);
+                    const y = this.courtHeight * 0.6 + (index * this.courtHeight * 0.08);
+                    player.style.left = x + 'px';
+                    player.style.top = y + 'px';
+                    this.court.appendChild(player);
 
-    function startGame() {
-        startScreen.style.display = 'none';
-        endScreen.style.display = 'none';
-        gameState = 'PLAYING';
-        player.score = 0;
-        ai.score = 0;
-        timer = settings.MATCH_DURATION;
-        resetPositions();
+                    this.gameState.players.push({
+                        element: player,
+                        team: 1,
+                        index: index,
+                        data: playerData,
+                        pos: { x: x, y: y },
+                        isControlled: index === this.gameState.controlledPlayer,
+                        stamina: 100,
+                        targetPos: { x: x, y: y }
+                    });
+                });
 
-        timerInterval = setInterval(() => {
-            if(gameState === 'PLAYING') {
-                timer--;
-                if (timer <= 0) {
-                    endGame();
+                // AI takımı (sağ taraf)
+                this.teamData.ai.forEach((playerData, index) => {
+                    const player = this.createPlayerElement(2, index, playerData);
+                    const x = this.courtWidth * 0.75 + (index * this.courtWidth * 0.06);
+                    const y = this.courtHeight * 0.6 + (index * this.courtHeight * 0.08);
+                    player.style.left = x + 'px';
+                    player.style.top = y + 'px';
+                    this.court.appendChild(player);
+
+                    this.gameState.players.push({
+                        element: player,
+                        team: 2,
+                        index: index,
+                        data: playerData,
+                        pos: { x: x, y: y },
+                        isControlled: false,
+                        stamina: 100,
+                        targetPos: { x: x, y: y },
+                        aiState: 'defend'
+                    });
+                });
+
+                this.updatePlayerHighlights();
+            }
+
+            createPlayerElement(team, index, playerData) {
+                const player = document.createElement('div');
+                player.className = `player team${team}-player`;
+                player.id = `team${team}-player-${index}`;
+                
+                player.innerHTML = `
+                    <div class="player-head"></div>
+                    <div class="player-body">
+                        <div class="player-arms"></div>
+                        ${playerData.name.charAt(0)}
+                    </div>
+                    <div class="player-legs"></div>
+                `;
+                
+                return player;
+            }
+
+            updatePlayerHighlights() {
+                this.gameState.players.forEach((player, i) => {
+                    player.element.classList.remove('controlled', 'ai-controlled');
+                    
+                    if (player.team === 1 && player.index === this.gameState.controlledPlayer) {
+                        player.element.classList.add('controlled');
+                        player.isControlled = true;
+                        
+                        // Ok işareti ekle
+                        const existingArrow = player.element.querySelector('.player-arrow');
+                        if (existingArrow) existingArrow.remove();
+                        
+                        const arrow = document.createElement('div');
+                        arrow.className = 'player-arrow';
+                        arrow.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                        player.element.appendChild(arrow);
+                    } else {
+                        player.isControlled = false;
+                        if (player.team === 2) {
+                            player.element.classList.add('ai-controlled');
+                        }
+                        
+                        const existingArrow = player.element.querySelector('.player-arrow');
+                        if (existingArrow) existingArrow.remove();
+                    }
+                });
+            }
+
+            bindEvents() {
+                // Keyboard events
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.key.toLowerCase()] = true;
+                    if (e.key === ' ') e.preventDefault();
+                });
+
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.key.toLowerCase()] = false;
+                });
+
+                // UI events
+                this.startBtn.addEventListener('click', () => this.startGame());
+                this.resetBtn.addEventListener('click', () => this.resetGame());
+
+                // Mobil kontroller - Touch events
+                this.jumpBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.jumpPlayer();
+                });
+
+                this.shootBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.startCharging('shoot');
+                });
+
+                this.shootBtn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.executeAction('shoot');
+                });
+
+                this.passBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.startCharging('pass');
+                });
+
+                this.passBtn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.executeAction('pass');
+                });
+
+                this.switchBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.switchPlayer();
+                });
+
+                // Mouse events için fallback
+                this.jumpBtn.addEventListener('mousedown', (e) => this.jumpPlayer());
+                this.shootBtn.addEventListener('mousedown', (e) => this.startCharging('shoot'));
+                this.shootBtn.addEventListener('mouseup', (e) => this.executeAction('shoot'));
+                this.passBtn.addEventListener('mousedown', (e) => this.startCharging('pass'));
+                this.passBtn.addEventListener('mouseup', (e) => this.executeAction('pass'));
+                this.switchBtn.addEventListener('mousedown', (e) => this.switchPlayer());
+            }
+
+            startGame() {
+                this.gameState.isPlaying = true;
+                this.gameState.isPaused = false;
+                this.gameState.timeLeft = 60;
+                this.startBtn.style.display = 'none';
+                this.gameTimer();
+            }
+
+            resetGame() {
+                this.gameState.isPlaying = false;
+                this.gameState.timeLeft = 60;
+                this.gameState.scores = [0, 0];
+                this.gameState.ballPos = { x: 390, y: 300 };
+                this.gameState.ballVelocity = { x: 0, y: 0 };
+                this.gameState.ballHolder = null;
+                this.gameState.shotPower = 0;
+                this.gameState.isCharging = false;
+                this.gameState.controlledPlayer = 0;
+                
+                this.stopCharging();
+                this.updateDisplay();
+                this.startBtn.style.display = 'inline-block';
+                this.createPlayers();
+            }
+
+            gameTimer() {
+                if (!this.gameState.isPlaying) return;
+                
+                const timerInterval = setInterval(() => {
+                    if (this.gameState.isPlaying && !this.gameState.isPaused) {
+                        this.gameState.timeLeft--;
+                        this.timer.textContent = this.gameState.timeLeft;
+                        
+                        if (this.gameState.timeLeft <= 0) {
+                            clearInterval(timerInterval);
+                            this.endGame();
+                        }
+                    }
+                }, 1000);
+            }
+
+            endGame() {
+                this.gameState.isPlaying = false;
+                let winner = this.gameState.scores[0] > this.gameState.scores[1] ? 'KAZANDIN!' : 
+                           this.gameState.scores[1] > this.gameState.scores[0] ? 'AI KAZANDI!' : 'BERABERE!';
+                
+                setTimeout(() => {
+                    alert(`OYUN BİTTİ!\n${winner}\nSkor: ${this.gameState.scores[0]} - ${this.gameState.scores[1]}`);
+                    this.startBtn.style.display = 'inline-block';
+                }, 500);
+            }
+
+            handleInput() {
+                if (!this.gameState.isPlaying || this.gameState.isPaused) return;
+
+                // Desktop kontroller - Şut ve Pas ayrı
+                if (this.keys[' ']) {
+                    this.jumpPlayer();
+                    this.keys[' '] = false;
+                }
+                
+                if (this.keys['s']) {
+                    if (!this.gameState.isCharging) {
+                        this.startCharging('shoot');
+                    }
+                } else if (this.gameState.isCharging && this.gameState.chargingType === 'shoot') {
+                    this.executeAction('shoot');
+                }
+                
+                if (this.keys['a']) {
+                    if (!this.gameState.isCharging) {
+                        this.startCharging('pass');
+                    }
+                } else if (this.gameState.isCharging && this.gameState.chargingType === 'pass') {
+                    this.executeAction('pass');
+                }
+                
+                if (this.keys['d']) {
+                    this.switchPlayer();
+                    this.keys['d'] = false;
                 }
             }
-        }, 1000);
-    }
-    
-    function endGame() {
-        clearInterval(timerInterval);
-        gameState = 'GAME_OVER';
-        sounds.whistle.play();
 
-        if (player.score > ai.score) {
-            resultText.textContent = 'KAZANDIN!';
-            resultText.style.color = '#7FDBFF';
-        } else if (ai.score > player.score) {
-            resultText.textContent = 'KAYBETTİN!';
-            resultText.style.color = '#FF4136';
-        } else {
-            resultText.textContent = 'BERABERE!';
-            resultText.style.color = '#AAAAAA';
+            switchPlayer() {
+                if (!this.gameState.isPlaying) return;
+                
+                this.gameState.controlledPlayer = (this.gameState.controlledPlayer + 1) % 3;
+                this.updatePlayerHighlights();
+            }
+
+            jumpPlayer() {
+                if (!this.gameState.isPlaying) return;
+                
+                const controlledPlayer = this.getControlledPlayer();
+                if (controlledPlayer && controlledPlayer.stamina > 10) {
+                    controlledPlayer.element.classList.add('jumping');
+                    controlledPlayer.stamina -= 10;
+                    
+                    const playerSize = this.getPlayerSize();
+                    this.createParticles(
+                        controlledPlayer.pos.x + (playerSize * 0.5), 
+                        controlledPlayer.pos.y + (playerSize * 0.8)
+                    );
+                    
+                    setTimeout(() => {
+                        controlledPlayer.element.classList.remove('jumping');
+                    }, 600);
+                }
+            }
+
+            startCharging(type) {
+                if (!this.gameState.isPlaying || this.gameState.isCharging) return;
+                
+                const controlledPlayer = this.getControlledPlayer();
+                if (!controlledPlayer) return;
+
+                // Top mesafesi kontrolü
+                const ballDistance = this.calculateDistance(controlledPlayer.pos, this.gameState.ballPos);
+                if (ballDistance > 60 && !this.gameState.ballHolder) return;
+
+                this.gameState.isCharging = true;
+                this.gameState.chargingType = type;
+                this.gameState.shotPower = 0;
+                this.touchStartTime = Date.now();
+
+                // Oyuncu animasyonu başlat
+                controlledPlayer.element.classList.add('charging');
+                if (type === 'shoot') {
+                    controlledPlayer.element.classList.add('shooting');
+                } else {
+                    controlledPlayer.element.classList.add('passing');
+                }
+
+                // Güç artırma
+                this.chargingInterval = setInterval(() => {
+                    if (this.gameState.shotPower < 100) {
+                        this.gameState.shotPower += 2;
+                        this.updatePowerIndicator();
+                    }
+                }, 50);
+
+                // Buton animasyonu
+                const button = type === 'shoot' ? this.shootBtn : this.passBtn;
+                button.classList.add('charging');
+
+                // 3 saniye sonra otomatik tetikle
+                setTimeout(() => {
+                    if (this.gameState.isCharging && this.gameState.chargingType === type) {
+                        this.executeAction(type);
+                    }
+                }, 3000);
+            }
+
+            executeAction(type) {
+                if (!this.gameState.isCharging || this.gameState.chargingType !== type) return;
+
+                const controlledPlayer = this.getControlledPlayer();
+                if (!controlledPlayer) return;
+
+                // Aksiyon animasyonu
+                if (type === 'shoot') {
+                    this.shootBall(controlledPlayer);
+                } else if (type === 'pass') {
+                    this.passBall(controlledPlayer);
+                }
+
+                this.stopCharging();
+            }
+
+            stopCharging() {
+                // Oyuncu animasyonlarını temizle
+                this.gameState.players.forEach(player => {
+                    player.element.classList.remove('charging', 'shooting', 'passing');
+                });
+
+                this.gameState.isCharging = false;
+                this.gameState.chargingType = null;
+                this.gameState.shotPower = 0;
+                
+                if (this.chargingInterval) {
+                    clearInterval(this.chargingInterval);
+                    this.chargingInterval = null;
+                }
+                
+                this.shootBtn.classList.remove('charging');
+                this.passBtn.classList.remove('charging');
+                this.updatePowerIndicator();
+            }
+
+            updatePowerIndicator() {
+                this.powerFill.style.width = this.gameState.shotPower + '%';
+                
+                // Renk değişimi
+                this.powerFill.className = 'power-fill';
+                if (this.gameState.shotPower < 33) {
+                    this.powerFill.classList.add('green');
+                } else if (this.gameState.shotPower < 66) {
+                    this.powerFill.classList.add('blue');
+                } else {
+                    this.powerFill.classList.add('red');
+                }
+            }
+
+            shootBall(player) {
+                if (!player) return;
+
+                // Şut animasyonu başlat
+                player.element.classList.add('shooting');
+                setTimeout(() => {
+                    player.element.classList.remove('shooting');
+                }, 800);
+
+                // Responsive hedef pota pozisyonu
+                const targetBasket = player.team === 1 ? 
+                    { x: this.courtWidth * 0.95, y: this.courtHeight * 0.2 } : 
+                    { x: this.courtWidth * 0.05, y: this.courtHeight * 0.2 };
+
+                const distance = this.calculateDistance(player.pos, targetBasket);
+                const isThreePoint = distance > this.courtWidth * 0.25;
+                
+                // Şut gücü ve doğruluk hesaplama
+                const powerFactor = this.gameState.shotPower / 100;
+                const accuracy = (player.data.stats.shooting + powerFactor * 25) - (distance / (this.courtWidth * 0.0125));
+                
+                // Top sahibi ol
+                this.gameState.ballHolder = player;
+                const playerSize = this.getPlayerSize();
+                const playerCenterX = player.pos.x + (playerSize * 0.5);
+                const playerCenterY = player.pos.y + (playerSize * 0.4);
+                this.gameState.ballPos.x = playerCenterX;
+                this.gameState.ballPos.y = playerCenterY;
+
+                // Responsive şut açısı ve hızı
+                const angle = Math.atan2(targetBasket.y - playerCenterY, targetBasket.x - playerCenterX);
+                const baseSpeed = (this.courtWidth / 100) + powerFactor * (this.courtWidth / 133);
+                
+                this.gameState.ballVelocity.x = Math.cos(angle) * baseSpeed;
+                this.gameState.ballVelocity.y = Math.sin(angle) * baseSpeed - (this.courtHeight / 67);
+                
+                this.gameState.ballHolder = null;
+                this.ball.classList.add('spinning');
+                
+                // Şut sonucunu değerlendir
+                setTimeout(() => {
+                    this.evaluateShot(player, accuracy, isThreePoint, targetBasket);
+                    this.ball.classList.remove('spinning');
+                }, 1000);
+
+                this.createParticles(playerCenterX, playerCenterY);
+                player.stamina -= 15;
+            }
+
+            passBall(player) {
+                if (!player) return;
+
+                // Pas animasyonu başlat
+                player.element.classList.add('passing');
+                setTimeout(() => {
+                    player.element.classList.remove('passing');
+                }, 600);
+
+                // En iyi takım arkadaşını bul
+                const teammates = this.gameState.players.filter(p => 
+                    p.team === player.team && p !== player && !p.isControlled
+                );
+
+                if (teammates.length === 0) return;
+
+                // En yakın ve en iyi pozisyondaki takım arkadaşı
+                let bestTeammate = teammates[0];
+                let bestScore = -1;
+
+                teammates.forEach(teammate => {
+                    const distance = this.calculateDistance(player.pos, teammate.pos);
+                    const score = (300 - distance) + teammate.data.stats.passing;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestTeammate = teammate;
+                    }
+                });
+
+                // Pas gücü hesaplama
+                const powerFactor = this.gameState.shotPower / 100;
+                const passSpeed = (this.courtWidth / 200) + powerFactor * (this.courtWidth / 200);
+                
+                const angle = Math.atan2(
+                    bestTeammate.pos.y - player.pos.y,
+                    bestTeammate.pos.x - player.pos.x
+                );
+
+                this.gameState.ballVelocity.x = Math.cos(angle) * passSpeed;
+                this.gameState.ballVelocity.y = Math.sin(angle) * passSpeed - (this.courtHeight / 400);
+                
+                this.gameState.ballHolder = null;
+                const playerSize = this.getPlayerSize();
+                this.createParticles(
+                    player.pos.x + (playerSize * 0.5), 
+                    player.pos.y + (playerSize * 0.4)
+                );
+                player.stamina -= 8;
+            }
+
+            evaluateShot(player, accuracy, isThreePoint, targetBasket) {
+                const ballDistance = this.calculateDistance(this.gameState.ballPos, targetBasket);
+                const hitChance = Math.max(15, Math.min(85, accuracy));
+                
+                if (ballDistance < 50 && Math.random() * 100 < hitChance) {
+                    // Başarılı şut!
+                    const points = isThreePoint ? 3 : 2;
+                    this.gameState.scores[player.team - 1] += points;
+                    
+                    this.createGoalEffect(targetBasket.x, targetBasket.y);
+                    this.showFloatingScore(targetBasket.x, targetBasket.y, 
+                        `+${points} ${isThreePoint ? '3P!' : 'GOL!'}`);
+                    
+                    // Topu merkeze al
+                    this.resetBall();
+                    
+                    // Oyuncu gelişimi
+                    player.data.stats.shooting = Math.min(100, player.data.stats.shooting + 1);
+                } else {
+                    // Kaçan şut - ribaund
+                    this.gameState.ballVelocity.x *= 0.3;
+                    this.gameState.ballVelocity.y = -2;
+                }
+            }
+
+            updatePhysics() {
+                if (!this.gameState.isPlaying || this.gameState.isPaused) return;
+
+                this.updatePlayerMovement();
+                this.updateAI();
+
+                // Top sahibi kontrolü
+                if (this.gameState.ballHolder) {
+                    const playerSize = this.getPlayerSize();
+                    this.gameState.ballPos.x = this.gameState.ballHolder.pos.x + (playerSize * 0.5);
+                    this.gameState.ballPos.y = this.gameState.ballHolder.pos.y + (playerSize * 0.4);
+                    this.gameState.ballVelocity = { x: 0, y: 0 };
+                } else {
+                    // Top fiziği
+                    this.gameState.ballVelocity.y += this.gameState.gravity;
+                    this.gameState.ballPos.x += this.gameState.ballVelocity.x;
+                    this.gameState.ballPos.y += this.gameState.ballVelocity.y;
+
+                    // Responsive top sınırları
+                    const ballSize = this.getBallSize();
+                    if (this.gameState.ballPos.y > this.courtHeight - ballSize - 10) {
+                        this.gameState.ballPos.y = this.courtHeight - ballSize - 10;
+                        this.gameState.ballVelocity.y *= -0.6;
+                        this.gameState.ballVelocity.x *= 0.8;
+                    }
+
+                    if (this.gameState.ballPos.x < 10) {
+                        this.gameState.ballPos.x = 10;
+                        this.gameState.ballVelocity.x *= -0.5;
+                    }
+
+                    if (this.gameState.ballPos.x > this.courtWidth - ballSize - 10) {
+                        this.gameState.ballPos.x = this.courtWidth - ballSize - 10;
+                        this.gameState.ballVelocity.x *= -0.5;
+                    }
+
+                    this.checkBallPickup();
+                }
+
+                // Stamina yenileme
+                this.gameState.players.forEach(player => {
+                    if (player.stamina < 100) {
+                        player.stamina += 0.5;
+                    }
+                });
+            }
+
+            checkBallPickup() {
+                if (this.gameState.ballHolder) return;
+                
+                let closestPlayer = null;
+                let closestDistance = Infinity;
+
+                this.gameState.players.forEach(player => {
+                    const distance = this.calculateDistance(player.pos, this.gameState.ballPos);
+                    
+                    if (distance < 35 && distance < closestDistance &&
+                        Math.abs(this.gameState.ballVelocity.x) < 3 && 
+                        Math.abs(this.gameState.ballVelocity.y) < 3) {
+                        closestDistance = distance;
+                        closestPlayer = player;
+                    }
+                });
+
+                if (closestPlayer) {
+                    this.gameState.ballHolder = closestPlayer;
+                    
+                    // Eğer oyuncu takımından biriyse kontrol et
+                    if (closestPlayer.team === 1) {
+                        this.gameState.controlledPlayer = closestPlayer.index;
+                        this.updatePlayerHighlights();
+                    }
+                }
+            }
+
+            // AI Sistem güncellemeleri
+            aiDefend(aiPlayer, targetPlayer) {
+                if (!targetPlayer) return;
+                
+                // Oyuncuyu sıkıştırma ve pas yollarını kesme
+                const interceptX = targetPlayer.pos.x + (Math.random() - 0.5) * (this.courtWidth * 0.1);
+                const interceptY = targetPlayer.pos.y + (Math.random() - 0.5) * (this.courtHeight * 0.1);
+                
+                aiPlayer.targetPos = { 
+                    x: Math.max(this.courtWidth * 0.5, Math.min(this.courtWidth * 0.95, interceptX)), 
+                    y: Math.max(this.courtHeight * 0.15, Math.min(this.courtHeight * 0.85, interceptY)) 
+                };
+            }
+
+            aiAttack(aiPlayer) {
+                // Topa doğru git
+                aiPlayer.targetPos = { 
+                    x: this.gameState.ballPos.x, 
+                    y: this.gameState.ballPos.y 
+                };
+            }
+
+            aiSupportAttack(aiPlayer) {
+                // Top sahibi AI'ya destek pozisyonu
+                const ballHolder = this.gameState.ballHolder;
+                if (!ballHolder || ballHolder.team !== 2) return;
+                
+                const supportX = ballHolder.pos.x + (aiPlayer.index * this.courtWidth * 0.1) - (this.courtWidth * 0.05);
+                const supportY = ballHolder.pos.y + (aiPlayer.index * this.courtHeight * 0.125) - (this.courtHeight * 0.0625);
+                
+                aiPlayer.targetPos = { 
+                    x: Math.max(this.courtWidth * 0.5, Math.min(this.courtWidth * 0.9, supportX)), 
+                    y: Math.max(this.courtHeight * 0.15, Math.min(this.courtHeight * 0.85, supportY)) 
+                };
+            }
+
+            aiPosition(aiPlayer) {
+                // Savunma pozisyonu - daha organize
+                const homeX = this.courtWidth * 0.625 + (aiPlayer.index * this.courtWidth * 0.1);
+                const homeY = this.courtHeight * 0.375 + (aiPlayer.index * this.courtHeight * 0.175);
+                
+                aiPlayer.targetPos = { 
+                    x: Math.max(this.courtWidth * 0.5625, Math.min(this.courtWidth * 0.95, homeX)), 
+                    y: Math.max(this.courtHeight * 0.15, Math.min(this.courtHeight * 0.85, homeY)) 
+                };
+            }
+
+            aiTakeAction(aiPlayer) {
+                const playerBasket = { x: this.courtWidth * 0.05, y: this.courtHeight * 0.2 };
+                const distance = this.calculateDistance(aiPlayer.pos, playerBasket);
+                
+                // AI şut kararı - daha agresif
+                const shootChance = (aiPlayer.data.stats.shooting / 100) * this.gameState.aiDifficulty * 1.5;
+                
+                if (distance < this.courtWidth * 0.375 && Math.random() < shootChance) {
+                    // AI şut animasyonu
+                    aiPlayer.element.classList.add('shooting');
+                    setTimeout(() => {
+                        aiPlayer.element.classList.remove('shooting');
+                    }, 800);
+
+                    // AI şut
+                    const angle = Math.atan2(playerBasket.y - aiPlayer.pos.y, playerBasket.x - aiPlayer.pos.x);
+                    const speed = (this.courtWidth / 100) + Math.random() * (this.courtWidth / 200);
+                    
+                    this.gameState.ballVelocity.x = Math.cos(angle) * speed;
+                    this.gameState.ballVelocity.y = Math.sin(angle) * speed - (this.courtHeight / 80);
+                    this.gameState.ballHolder = null;
+                    
+                    this.ball.classList.add('spinning');
+                    
+                    // AI şut değerlendirmesi
+                    setTimeout(() => {
+                        const ballDistance = this.calculateDistance(this.gameState.ballPos, playerBasket);
+                        const accuracy = aiPlayer.data.stats.shooting * this.gameState.aiDifficulty;
+                        
+                        if (ballDistance < this.courtWidth * 0.0625 && Math.random() * 100 < accuracy) {
+                            const points = distance > this.courtWidth * 0.25 ? 3 : 2;
+                            this.gameState.scores[1] += points;
+                            this.createGoalEffect(playerBasket.x, playerBasket.y);
+                            this.showFloatingScore(playerBasket.x, playerBasket.y, `AI +${points}`);
+                            this.resetBall();
+                        } else {
+                            // AI kaçan şut
+                            this.gameState.ballVelocity.x *= 0.3;
+                            this.gameState.ballVelocity.y = -2;
+                        }
+                        this.ball.classList.remove('spinning');
+                    }, 1000);
+                } else {
+                    // AI pas yapmayı dene
+                    const aiTeammates = this.gameState.players.filter(p => 
+                        p.team === 2 && p !== aiPlayer
+                    );
+                    
+                    if (aiTeammates.length > 0 && Math.random() < 0.6) {
+                        // AI pas animasyonu
+                        aiPlayer.element.classList.add('passing');
+                        setTimeout(() => {
+                            aiPlayer.element.classList.remove('passing');
+                        }, 600);
+
+                        const target = aiTeammates[Math.floor(Math.random() * aiTeammates.length)];
+                        const angle = Math.atan2(target.pos.y - aiPlayer.pos.y, target.pos.x - aiPlayer.pos.x);
+                        
+                        this.gameState.ballVelocity.x = Math.cos(angle) * (this.courtWidth / 133);
+                        this.gameState.ballVelocity.y = Math.sin(angle) * (this.courtWidth / 133) - (this.courtHeight / 400);
+                        this.gameState.ballHolder = null;
+                    }
+                }
+            }
+
+            updateTeammateAI(teammate) {
+                const controlledPlayer = this.getControlledPlayer();
+                if (!controlledPlayer) return;
+
+                // Kontrol edilen oyuncuya destek
+                const distanceToControlled = this.calculateDistance(teammate.pos, controlledPlayer.pos);
+                
+                if (distanceToControlled > this.courtWidth * 0.125) {
+                    // Destek pozisyonuna git
+                    const supportX = controlledPlayer.pos.x + (teammate.index * this.courtWidth * 0.075) - (this.courtWidth * 0.0375);
+                    const supportY = controlledPlayer.pos.y + (teammate.index * this.courtHeight * 0.1) - (this.courtHeight * 0.05);
+                    
+                    teammate.targetPos = { 
+                        x: Math.max(this.courtWidth * 0.0375, Math.min(this.courtWidth * 0.9625, supportX)), 
+                        y: Math.max(this.courtHeight * 0.15, Math.min(this.courtHeight * 0.85, supportY)) 
+                    };
+                } else {
+                    // Pozisyon koru
+                    teammate.targetPos = { x: teammate.pos.x, y: teammate.pos.y };
+                }
+            }
+
+            resetGame() {
+                this.gameState.isPlaying = false;
+                this.gameState.timeLeft = 60;
+                this.gameState.scores = [0, 0];
+                this.gameState.ballHolder = null;
+                this.gameState.shotPower = 0;
+                this.gameState.isCharging = false;
+                this.gameState.controlledPlayer = 0;
+                
+                this.updateCourtDimensions();
+                this.stopCharging();
+                this.updateDisplay();
+                this.startBtn.style.display = 'inline-block';
+                this.createPlayers();
+            }
+
+            // AI Sistemi - Gelişmiş
+            updateAI() {
+                if (!this.gameState.isPlaying) return;
+
+                this.gameState.players.forEach(player => {
+                    if (player.team === 2) { // AI takımı - tam kontrol
+                        this.updateAIPlayer(player);
+                    } else if (player.team === 1 && !player.isControlled) {
+                        // Oyuncu takımındaki kontrol edilmeyen oyuncular
+                        this.updateTeammateAI(player);
+                    }
+                });
+            }
+
+            updateAIPlayer(aiPlayer) {
+                const ballDistance = this.calculateDistance(aiPlayer.pos, this.gameState.ballPos);
+                const controlledPlayer = this.getControlledPlayer();
+                
+                // AI strateji belirleme - daha akıllı
+                if (this.gameState.ballHolder && this.gameState.ballHolder.team === 1) {
+                    // Oyuncu takımında top varsa agresif savunma
+                    aiPlayer.aiState = 'defend';
+                    this.aiDefend(aiPlayer, controlledPlayer);
+                } else if (this.gameState.ballHolder && this.gameState.ballHolder.team === 2) {
+                    // AI takımında top varsa destek
+                    aiPlayer.aiState = 'support';
+                    this.aiSupportAttack(aiPlayer);
+                } else if (ballDistance < 80) {
+                    // Topa yakınsa agresif saldırı
+                    aiPlayer.aiState = 'attack';
+                    this.aiAttack(aiPlayer);
+                } else {
+                    // Genel pozisyon alma
+                    aiPlayer.aiState = 'position';
+                    this.aiPosition(aiPlayer);
+                }
+
+                // AI aksiyon alma - daha sık
+                if (this.gameState.ballHolder === aiPlayer && Math.random() < 0.05) {
+                    this.aiTakeAction(aiPlayer);
+                }
+            }
+
+            aiDefend(aiPlayer, targetPlayer) {
+                if (!targetPlayer) return;
+                
+                // Oyuncuyu sıkıştırma ve pas yollarını kesme
+                const interceptX = targetPlayer.pos.x + (Math.random() - 0.5) * 60;
+                const interceptY = targetPlayer.pos.y + (Math.random() - 0.5) * 40;
+                
+                aiPlayer.targetPos = { 
+                    x: Math.max(400, Math.min(770, interceptX)), 
+                    y: Math.max(60, Math.min(340, interceptY)) 
+                };
+            }
+
+            aiSupportAttack(aiPlayer) {
+                // Top sahibi AI'ya destek pozisyonu
+                const ballHolder = this.gameState.ballHolder;
+                if (!ballHolder || ballHolder.team !== 2) return;
+                
+                const supportX = ballHolder.pos.x + (aiPlayer.index * 80) - 40;
+                const supportY = ballHolder.pos.y + (aiPlayer.index * 50) - 25;
+                
+                aiPlayer.targetPos = { 
+                    x: Math.max(400, Math.min(750, supportX)), 
+                    y: Math.max(60, Math.min(340, supportY)) 
+                };
+            }
+
+            aiPosition(aiPlayer) {
+                // Savunma pozisyonu - daha organize
+                const homeX = 500 + aiPlayer.index * 80;
+                const homeY = 150 + aiPlayer.index * 70;
+                
+                aiPlayer.targetPos = { 
+                    x: Math.max(450, Math.min(770, homeX)), 
+                    y: Math.max(60, Math.min(340, homeY)) 
+                };
+            }
+
+            aiTakeAction(aiPlayer) {
+                const playerBasket = { x: 35, y: 90 }; // Pota yüksekliği düzeltildi
+                const distance = this.calculateDistance(aiPlayer.pos, playerBasket);
+                
+                // AI şut kararı - daha agresif yapıldı
+                const shootChance = (aiPlayer.data.stats.shooting / 100) * this.gameState.aiDifficulty * 1.5;
+                
+                if (distance < 300 && Math.random() < shootChance) {
+                    // AI şut
+                    const angle = Math.atan2(playerBasket.y - aiPlayer.pos.y, playerBasket.x - aiPlayer.pos.x);
+                    const speed = 8 + Math.random() * 4;
+                    
+                    this.gameState.ballVelocity.x = Math.cos(angle) * speed;
+                    this.gameState.ballVelocity.y = Math.sin(angle) * speed - 5;
+                    this.gameState.ballHolder = null;
+                    
+                    this.ball.classList.add('spinning');
+                    
+                    // AI şut değerlendirmesi
+                    setTimeout(() => {
+                        const ballDistance = this.calculateDistance(this.gameState.ballPos, playerBasket);
+                        const accuracy = aiPlayer.data.stats.shooting * this.gameState.aiDifficulty;
+                        
+                        if (ballDistance < 50 && Math.random() * 100 < accuracy) {
+                            const points = distance > 200 ? 3 : 2;
+                            this.gameState.scores[1] += points;
+                            this.createGoalEffect(playerBasket.x, playerBasket.y);
+                            this.showFloatingScore(playerBasket.x, playerBasket.y, `AI +${points}`);
+                            this.resetBall();
+                        } else {
+                            // AI kaçan şut
+                            this.gameState.ballVelocity.x *= 0.3;
+                            this.gameState.ballVelocity.y = -2;
+                        }
+                        this.ball.classList.remove('spinning');
+                    }, 1000);
+                } else {
+                    // AI pas yapmayı dene
+                    const aiTeammates = this.gameState.players.filter(p => 
+                        p.team === 2 && p !== aiPlayer
+                    );
+                    
+                    if (aiTeammates.length > 0 && Math.random() < 0.6) {
+                        const target = aiTeammates[Math.floor(Math.random() * aiTeammates.length)];
+                        const angle = Math.atan2(target.pos.y - aiPlayer.pos.y, target.pos.x - aiPlayer.pos.x);
+                        
+                        this.gameState.ballVelocity.x = Math.cos(angle) * 6;
+                        this.gameState.ballVelocity.y = Math.sin(angle) * 6 - 1;
+                        this.gameState.ballHolder = null;
+                    }
+                }
+            }
+
+            // Fizik ve hareket
+            updatePlayerMovement() {
+                this.gameState.players.forEach(player => {
+                    if (this.gameState.ballHolder === player) return;
+
+                    const speed = (player.data.stats.speed / 100) * 1.5;
+                    
+                    if (player.isControlled) {
+                        // Kontrol edilen oyuncu topa gider
+                        const ballDistance = this.calculateDistance(player.pos, this.gameState.ballPos);
+                        if (ballDistance > 30) {
+                            const angle = Math.atan2(
+                                this.gameState.ballPos.y - player.pos.y,
+                                this.gameState.ballPos.x - player.pos.x
+                            );
+                            player.pos.x += Math.cos(angle) * speed;
+                            player.pos.y += Math.sin(angle) * speed * 0.7;
+                        }
+                    } else {
+                        // Diğer oyuncular hedef pozisyona gider
+                        const targetDistance = this.calculateDistance(player.pos, player.targetPos);
+                        if (targetDistance > 5) {
+                            const angle = Math.atan2(
+                                player.targetPos.y - player.pos.y,
+                                player.targetPos.x - player.pos.x
+                            );
+                            player.pos.x += Math.cos(angle) * speed * 0.8;
+                            player.pos.y += Math.sin(angle) * speed * 0.8;
+                        }
+                    }
+
+                    // Sınırlar
+                    player.pos.x = Math.max(20, Math.min(760, player.pos.x));
+                    player.pos.y = Math.max(50, Math.min(350, player.pos.y));
+                });
+            }
+
+            updatePhysics() {
+                if (!this.gameState.isPlaying || this.gameState.isPaused) return;
+
+                this.updatePlayerMovement();
+                this.updateAI();
+
+                // Top sahibi kontrolü
+                if (this.gameState.ballHolder) {
+                    this.gameState.ballPos.x = this.gameState.ballHolder.pos.x + 17;
+                    this.gameState.ballPos.y = this.gameState.ballHolder.pos.y + 17;
+                    this.gameState.ballVelocity = { x: 0, y: 0 };
+                } else {
+                    // Top fiziği
+                    this.gameState.ballVelocity.y += this.gameState.gravity;
+                    this.gameState.ballPos.x += this.gameState.ballVelocity.x;
+                    this.gameState.ballPos.y += this.gameState.ballVelocity.y;
+
+                    // Top sınırları
+                    if (this.gameState.ballPos.y > this.courtHeight - 20) {
+                        this.gameState.ballPos.y = this.courtHeight - 20;
+                        this.gameState.ballVelocity.y *= -0.6;
+                        this.gameState.ballVelocity.x *= 0.8;
+                    }
+
+                    if (this.gameState.ballPos.x < 10) {
+                        this.gameState.ballPos.x = 10;
+                        this.gameState.ballVelocity.x *= -0.5;
+                    }
+
+                    if (this.gameState.ballPos.x > this.courtWidth - 30) {
+                        this.gameState.ballPos.x = this.courtWidth - 30;
+                        this.gameState.ballVelocity.x *= -0.5;
+                    }
+
+                    this.checkBallPickup();
+                }
+
+                // Stamina yenileme
+                this.gameState.players.forEach(player => {
+                    if (player.stamina < 100) {
+                        player.stamina += 0.5;
+                    }
+                });
+            }
+
+            checkBallPickup() {
+                if (this.gameState.ballHolder) return;
+                
+                let closestPlayer = null;
+                let closestDistance = Infinity;
+
+                this.gameState.players.forEach(player => {
+                    const distance = this.calculateDistance(player.pos, this.gameState.ballPos);
+                    
+                    if (distance < 25 && distance < closestDistance &&
+                        Math.abs(this.gameState.ballVelocity.x) < 2 && 
+                        Math.abs(this.gameState.ballVelocity.y) < 2) {
+                        closestDistance = distance;
+                        closestPlayer = player;
+                    }
+                });
+
+                if (closestPlayer) {
+                    this.gameState.ballHolder = closestPlayer;
+                    
+                    // Eğer oyuncu takımından biriyse kontrol et
+                    if (closestPlayer.team === 1) {
+                        this.gameState.controlledPlayer = closestPlayer.index;
+                        this.updatePlayerHighlights();
+                    }
+                }
+            }
+
+            // Yardımcı fonksiyonlar
+            getControlledPlayer() {
+                return this.gameState.players.find(p => p.team === 1 && p.index === this.gameState.controlledPlayer);
+            }
+
+            calculateDistance(pos1, pos2) {
+                return Math.sqrt(Math.pow(pos1.x - pos2.x, 2) + Math.pow(pos1.y - pos2.y, 2));
+            }
+
+            resetBall() {
+                this.gameState.ballPos = { 
+                    x: this.courtWidth * 0.5, 
+                    y: this.courtHeight * 0.75 
+                };
+                this.gameState.ballVelocity = { x: 0, y: 0 };
+                this.gameState.ballHolder = null;
+            }
+
+            createGoalEffect(x, y) {
+                for (let i = 0; i < 15; i++) {
+                    setTimeout(() => {
+                        this.createParticles(
+                            x + (Math.random() - 0.5) * 80,
+                            y + (Math.random() - 0.5) * 50
+                        );
+                    }, i * 30);
+                }
+            }
+
+            createParticles(x, y) {
+                for (let i = 0; i < 6; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = x + 'px';
+                    particle.style.top = y + 'px';
+                    particle.style.animationDelay = (i * 0.1) + 's';
+                    this.court.appendChild(particle);
+                    
+                    setTimeout(() => {
+                        if (particle.parentNode) {
+                            particle.parentNode.removeChild(particle);
+                        }
+                    }, 1000);
+                }
+            }
+
+            showFloatingScore(x, y, text) {
+                const scoreElement = document.createElement('div');
+                scoreElement.className = 'floating-score';
+                scoreElement.textContent = text;
+                scoreElement.style.left = x + 'px';
+                scoreElement.style.top = y + 'px';
+                this.court.appendChild(scoreElement);
+                
+                setTimeout(() => {
+                    if (scoreElement.parentNode) {
+                        scoreElement.parentNode.removeChild(scoreElement);
+                    }
+                }, 1500);
+            }
+
+            updateDisplay() {
+                // Oyuncu pozisyonları
+                this.gameState.players.forEach(player => {
+                    player.element.style.left = player.pos.x + 'px';
+                    player.element.style.top = player.pos.y + 'px';
+                    
+                    // Stamina göstergesi
+                    const opacity = 0.6 + (player.stamina / 100) * 0.4;
+                    player.element.style.opacity = opacity;
+                });
+                
+                // Top pozisyonu
+                this.ball.style.left = this.gameState.ballPos.x + 'px';
+                this.ball.style.top = this.gameState.ballPos.y + 'px';
+                
+                // Skor
+                this.score1.textContent = this.gameState.scores[0];
+                this.score2.textContent = this.gameState.scores[1];
+                this.timer.textContent = this.gameState.timeLeft;
+            }
+
+            gameLoop() {
+                this.handleInput();
+                this.updatePhysics();
+                this.updateDisplay();
+                
+                requestAnimationFrame(() => this.gameLoop());
+            }
         }
-        finalScoreText.textContent = `Skor: ${player.score} - ${ai.score}`;
-        endScreen.style.display = 'flex';
-    }
 
-
-    startBtn.addEventListener('click', startGame);
-    restartBtn.addEventListener('click', startGame);
-
-    function gameLoop() {
-        // Arka planı temizle
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Sahayı çiz
-        drawField();
-        
-        if (gameState === 'PLAYING') {
-            // Güncellemeler
-            handlePlayerInput();
-            updateAI();
-            updatePhysics(player);
-            updatePhysics(ai);
-            updateBall();
-
-            // Çarpışmalar
-            checkCollision(player, ball);
-            checkCollision(ai, ball);
-            checkGoal();
-        }
-
-        // Çizimler
-        drawPlayer(player);
-        drawPlayer(ai);
-        drawBall();
-        drawUI();
-        
-        requestAnimationFrame(gameLoop);
-    }
-
-    // Oyunu başlat
-    gameLoop();
-
+        // Oyunu başlat
+        document.addEventListener('DOMContentLoaded', () => {
+            new MobileStreetHoop();
+        });
     </script>
 </body>
 </html>
